@@ -48,6 +48,7 @@ TicTacToe::TicTacToe()
 void TicTacToe::startGame()
 {
     cin >> current_block;
+    current_block--;
     for (int i = 0; i < 81; i++)
     {
         current_move = (i % 2 == 0) ? 'X' : 'O';
@@ -108,7 +109,7 @@ bool TicTacToe::isBoardEmpty(const std::vector<vector<char>> &block)
 
 bool TicTacToe::isMoveValid(int cell)
 {
-    return cell >= 9 && board[current_block][cell / 3][cell % 3] == ' ';
+    return cell <= 9 && board[current_block][cell / 3][cell % 3] == INTIAL_FILL;
 }
 
 void TicTacToe::setCurrentBlock()
@@ -118,18 +119,23 @@ void TicTacToe::setCurrentBlock()
 
     cout << "Choose Block - ";
     cin >> current_block;
+    current_block--;
 }
 
 void TicTacToe::makeMove(char player, int cell)
 {
     if (isMoveValid(cell))
+    {
         board[current_block][cell / 3][cell % 3] = player;
+        current_block = cell;
+    }
 }
 
 void TicTacToe::chooseMove()
 {
     cout << "Cell - ";
     cin >> move;
+    move--;
 }
 
 bool TicTacToe::validateBoard(const vector<vector<char>> &grid)
