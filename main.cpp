@@ -1,188 +1,313 @@
 #include <iostream>
-#include <vector>
+#include <array>
 #include <conio.h>
-using namespace std;
 
-#define CLEAR_SCREEN system("CLS")
-
-const int SIZE = 3;
-const char QUIT_KEY = 'Q';
-const char INTIAL_FILL = '1';
+#define CLEAR_SCREEN system("CLS");
 
 class TicTacToe
 {
 private:
-    int current_block, move;
-    char current_win, current_move;
-    bool is_game_done = false;
-    vector<vector<vector<char>>> board;
-    vector<vector<char>> board_score;
+    static const int SIZE = 3;
+    static const int BLOCK_END = 8;
+    static const int BLOCK_START = 0;
 
-    void startGame();
-    void printBoard();
-    void printRow(int, int, int);
-    bool isBoardEmpty(const vector<vector<char>> &);
-    bool isMoveValid(int);
-    void setCurrentBlock();
-    void makeMove(char, int);
-    void chooseMove();
-    bool validateBoard(const vector<vector<char>> &);
+    static const char DRAW = 'D';
+    static const char QUIT_KEY = 'Q';
+    static const char INTIAL_FILL = ' ';
+
+    static const char JUNCTION;
+    static const char STRAIGHT_LINE;
+    static const char SLEEPING_LINE;
+    static const char COLUMN_SEPERATOR;
+
+    typedef std::array<std::array<char, SIZE>, SIZE> singleBoard;
+
+    int currentCellToPlay;
+    bool isGameDone;
+    char currentPlayer;
+    int currentBlockToPlay;
+    int blocksCompletelyfilled;
+    std::string player1Name, player2Name;
+
+    singleBoard blockWinner;
+    std::array<std::array<int, SIZE>, SIZE> frequencyCount;
+    std::array<std::array<singleBoard, SIZE>, SIZE> gameBoard;
+
+    void moveInput();
+    void printTable();
+    void intializeFullBoard();
+    void intializeSingleBoard(singleBoard &);
+    void drawLine(const char &, const char &);
+
+    bool isBoardSolved(const singleBoard &);
+
+    inline bool validateCurrentCellToPlay();
+    inline bool validateCurrentBlockToPlay();
 
 public:
-    TicTacToe();
+    TicTacToe(const std::string &, const std::string &);
+    void startGame();
 };
 
 int main()
 {
-    TicTacToe one;
-    return 0;
+    TicTacToe one("a", "b");
 }
 
-TicTacToe::TicTacToe()
+const char TicTacToe::JUNCTION = 197;
+const char TicTacToe::STRAIGHT_LINE = 179;
+const char TicTacToe::SLEEPING_LINE = 196;
+const char TicTacToe::COLUMN_SEPERATOR = ' ';
+
+TicTacToe::TicTacToe(const std::string &player1Name, const std::string &player2Name)
 {
-    board.resize(SIZE * SIZE, vector<vector<char>>(SIZE, vector<char>(SIZE, INTIAL_FILL)));
-    board_score.resize(SIZE, vector<char>(SIZE, ' '));
+    this->isGameDone = false;
+    this->currentPlayer = 'X';
+    this->currentBlockToPlay = -1;
+    this->currentCellToPlay = -1;
+    this->blocksCompletelyfilled = 0;
+    this->player1Name = player1Name;
+    this->player2Name = player2Name;
+
+    intializeFullBoard();
     startGame();
 }
 
 void TicTacToe::startGame()
 {
-    cin >> current_block;
-    current_block--;
-    for (int i = 0; i < 81; i++)
+    while (!isGameDone)
     {
-        current_move = (i % 2 == 0) ? 'X' : 'O';
+        moveInput();
 
         CLEAR_SCREEN;
-        // if (validateBoard(board_score))
-        // {
-        //     cout << current_win << " Won the game\n";
-        //     return;
-        // }
+        printTable();
 
-        printBoard();
-        setCurrentBlock();
-        chooseMove();
-        makeMove(current_move, move);
-        validateBoard(board[current_block]);
-    }
-}
+        gameBoard[currentBlockToPlay / SIZE][currentBlockToPlay % SIZE][currentCellToPlay / SIZE][currentCellToPlay % SIZE] = currentPlayer;
+        frequencyCount[currentBlockToPlay / SIZE][currentBlockToPlay % SIZE]++;
 
-void TicTacToe::printBoard()
-{
-    for (int i = 0; i < SIZE; i++)
-    {
-        for (int j = 0; j < SIZE; j++)
+        if (isBoardSolved(gameBoard[currentBlockToPlay / SIZE][currentBlockToPlay % SIZE]))
         {
-            printRow(i * 3, j, 0);
+            blockWinner[currentBlockToPlay / SIZE][currentBlockToPlay % SIZE] = currentPlayer;
         }
-        cout << "\n";
-    }
-}
 
-void TicTacToe::printRow(int start_block, int row_index, int blockIndex)
-{
-    for (int i = start_block; i < start_block + SIZE; i++)
-    {
-        for (int j = blockIndex; j < blockIndex + SIZE; j++)
+        if (isBoardSolved(blockWinner))
         {
-            cout << board[i][row_index][j] << " ";
+            isGameDone = true;
+            continue;
         }
-        cout << "\t";
-    }
-    cout << "\n";
-}
-
-bool TicTacToe::isBoardEmpty(const std::vector<vector<char>> &block)
-{
-    int count = 0;
-    for (const auto &row : block)
-    {
-        for (const auto &cell : row)
+        else if (frequencyCount[currentBlockToPlay / SIZE][currentBlockToPlay % SIZE] == SIZE * SIZE)
         {
-            count += (cell == ' ') * 1;
+            if (++blocksCompletelyfilled == SIZE * SIZE)
+            {
+                isGameDone = true;
+                currentPlayer = DRAW;
+                continue;
+            }
+            blockWinner[currentBlockToPlay / SIZE][currentBlockToPlay % SIZE] = DRAW;
         }
-    }
 
-    return count != 0;
-}
-
-bool TicTacToe::isMoveValid(int cell)
-{
-    return cell <= 9 && board[current_block][cell / 3][cell % 3] == INTIAL_FILL;
-}
-
-void TicTacToe::setCurrentBlock()
-{
-    if (!isBoardEmpty(board[current_block]))
-        return;
-
-    cout << "Choose Block - ";
-    cin >> current_block;
-    current_block--;
-}
-
-void TicTacToe::makeMove(char player, int cell)
-{
-    if (isMoveValid(cell))
-    {
-        board[current_block][cell / 3][cell % 3] = player;
-        current_block = cell;
+        currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
+        currentBlockToPlay = currentCellToPlay;
+        currentCellToPlay = -1;
     }
 }
 
-void TicTacToe::chooseMove()
+void TicTacToe::moveInput()
 {
-    cout << "Cell - ";
-    cin >> move;
-    move--;
+    bool is_block_valid = validateCurrentBlockToPlay();
+    bool is_cell_valid = validateCurrentCellToPlay();
+
+    while (!is_block_valid)
+    {
+        CLEAR_SCREEN;
+        printTable();
+
+        std::cout << "Enter current to paly - ";
+        std::cin >> currentBlockToPlay;
+        currentBlockToPlay--;
+
+        is_block_valid = (currentBlockToPlay >= BLOCK_START && currentBlockToPlay <= BLOCK_END) && validateCurrentBlockToPlay();
+
+        std::cout << "Invalid block number\n";
+    }
+
+    while (!is_cell_valid)
+    {
+        CLEAR_SCREEN;
+        printTable();
+        std::cout << "Enter cell to play in block " << currentBlockToPlay << " - ";
+        std::cin >> currentCellToPlay;
+        currentCellToPlay--;
+
+        is_cell_valid = (currentCellToPlay >= BLOCK_START && currentCellToPlay <= BLOCK_END) && validateCurrentCellToPlay();
+        std::cout << "Invalid block number\n";
+    }
 }
 
-bool TicTacToe::validateBoard(const vector<vector<char>> &grid)
+inline bool TicTacToe::validateCurrentBlockToPlay()
 {
-    bool line = false;
+    return (currentBlockToPlay != -1 && frequencyCount[currentBlockToPlay / SIZE][currentBlockToPlay % SIZE] < SIZE * SIZE);
+}
 
-    for (int i = 0; i < SIZE; i++)
+inline bool TicTacToe::validateCurrentCellToPlay()
+{
+    return (currentCellToPlay != -1 && gameBoard[currentBlockToPlay / SIZE][currentBlockToPlay % SIZE][currentCellToPlay / SIZE][currentCellToPlay % SIZE] == INTIAL_FILL);
+}
+
+bool TicTacToe::isBoardSolved(const singleBoard &currentBoard)
+{
+    static auto check_row = [&]()
     {
-        int count = 0;
-        for (int j = 0; j < SIZE - 1; j++)
+        bool is_solved = false;
+        int row_count = 0;
+
+        for (int row = 0; row < SIZE; row++)
         {
-            count += 1 * (grid[i][j] == grid[i][j + 1]);
-            current_win = grid[i][j];
+            row_count = 0;
+            for (int col = 0; col < SIZE; col++)
+            {
+                row_count = row_count * (currentBoard[row][col] == currentPlayer) + 1;
+            }
+
+            is_solved |= (row_count == SIZE);
         }
-        line = (count == 2);
 
-        if (line)
-            return line;
-    }
+        return is_solved;
+    };
 
-    for (int i = 0; i < SIZE - 1; i++)
+    static auto check_column = [&]()
     {
-        int count = 0;
-        for (int j = 0; j < SIZE; j++)
+        bool is_solved = false;
+        int column_count = 0;
+        for (int col = 0; col < SIZE; col++)
         {
-            count += 1 * (grid[j][i] == grid[j][i + 1]);
-            current_win = grid[i][j];
+            column_count = 0;
+            for (int row = 0; row < SIZE; row++)
+            {
+                column_count = column_count * (currentBoard[row][col] == currentPlayer) + 1;
+            }
+
+            is_solved |= (column_count == SIZE);
         }
-        line = (count == 2);
 
-        if (line)
-            return line;
-    }
+        return is_solved;
+    };
 
-    for (int i = 0; i < SIZE - 1; i++)
+    static auto check_left_diagonal = [&]()
     {
-        line = (grid[i][i] == grid[i + 1][i + 1]);
-        current_win = grid[i][i];
-    }
+        int left_diagonal_count = 0;
 
-    if (line)
-        return line;
+        for (int row = 0; row < SIZE; row++)
+        {
+            left_diagonal_count = left_diagonal_count * (currentBoard[row][row] == currentPlayer) + 1;
+        }
 
-    for (int i = SIZE - 1; i > 0; i--)
+        return (left_diagonal_count == SIZE);
+    };
+
+    static auto check_right_diagonal = [&]()
     {
-        line = (grid[i][SIZE - i - 1] == grid[i - 1][SIZE - i]);
-        current_win = grid[i][SIZE - i - 1];
+        int right_diagonal_count = 0;
+
+        for (int row = 0; row < SIZE; row++)
+        {
+            right_diagonal_count = right_diagonal_count * (currentBoard[row][SIZE - row - 1] == currentPlayer) + 1;
+        }
+
+        return (right_diagonal_count == SIZE);
+    };
+
+    return check_row() || check_column() || check_left_diagonal() || check_right_diagonal();
+}
+
+void TicTacToe::intializeFullBoard()
+{
+    static auto intializeSingleBoard = [](singleBoard &currentBoard)
+    {
+        for (std::array<char, SIZE> &row : currentBoard)
+        {
+            for (char &block : row)
+            {
+                block = INTIAL_FILL;
+            }
+        }
+    };
+
+    for (std::array<singleBoard, SIZE> &row : gameBoard)
+    {
+        for (singleBoard &singleGame : row)
+        {
+            intializeSingleBoard(singleGame);
+        }
     }
-    return line;
+}
+
+void TicTacToe::drawLine(const char &lineChar, const char &columnSeperator)
+{
+    for (int sperations = 0; sperations < SIZE; sperations++)
+    {
+        for (int print_char = 0; print_char < SIZE * 2 + 2; print_char++)
+        {
+            std::cout << lineChar;
+        }
+
+        if (sperations != SIZE - 1)
+            std::cout << columnSeperator;
+    }
+
+    std::cout << std::endl;
+}
+
+void TicTacToe::printTable()
+{
+    drawLine(TicTacToe::COLUMN_SEPERATOR, TicTacToe::STRAIGHT_LINE);
+
+    for (int block_row = 0; block_row < SIZE; block_row++)
+    {
+        for (int row = 0; row < SIZE; row++)
+        {
+            std::cout << COLUMN_SEPERATOR;
+
+            for (int first_col = 0; first_col < SIZE; first_col++)
+            {
+                std::cout << gameBoard[block_row][0][row][first_col] << (first_col != SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPERATOR);
+            }
+
+            std::cout << COLUMN_SEPERATOR << STRAIGHT_LINE << COLUMN_SEPERATOR;
+
+            for (int second_col = 0; second_col < SIZE; second_col++)
+            {
+                std::cout << gameBoard[block_row][1][row][second_col] << (second_col != SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPERATOR);
+            }
+
+            std::cout << COLUMN_SEPERATOR << STRAIGHT_LINE << COLUMN_SEPERATOR;
+
+            for (int third_col = 0; third_col < SIZE; third_col++)
+            {
+                std::cout << gameBoard[block_row][1][row][third_col] << (third_col != SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPERATOR);
+            }
+
+            std::cout << std::endl;
+            if (row != SIZE - 1)
+            {
+
+                std::cout << SLEEPING_LINE << SLEEPING_LINE << JUNCTION;
+                std::cout << SLEEPING_LINE << JUNCTION << SLEEPING_LINE << COLUMN_SEPERATOR << COLUMN_SEPERATOR << STRAIGHT_LINE;
+                std::cout << SLEEPING_LINE << SLEEPING_LINE << JUNCTION;
+                std::cout << SLEEPING_LINE << JUNCTION << SLEEPING_LINE << COLUMN_SEPERATOR << COLUMN_SEPERATOR << STRAIGHT_LINE;
+                std::cout << SLEEPING_LINE << SLEEPING_LINE << JUNCTION;
+                std::cout << SLEEPING_LINE << JUNCTION << SLEEPING_LINE << COLUMN_SEPERATOR << COLUMN_SEPERATOR;
+                std::cout << std::endl;
+            }
+        }
+
+        drawLine(TicTacToe::COLUMN_SEPERATOR, TicTacToe::STRAIGHT_LINE);
+
+        if (block_row < SIZE - 1)
+        {
+            drawLine(TicTacToe::SLEEPING_LINE, TicTacToe::JUNCTION);
+        }
+
+        drawLine(TicTacToe::COLUMN_SEPERATOR, TicTacToe::STRAIGHT_LINE);
+    }
 }
