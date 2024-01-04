@@ -3,25 +3,24 @@
 
 #define CLEAR_SCREEN system("CLS");
 
-constexpr unsigned char JUNCTION = 197;
-constexpr unsigned char STRAIGHT_LINE = 179;
-constexpr unsigned char SLEEPING_LINE = 196;
-constexpr unsigned char COLUMN_SEPARATOR = ' ';
-
 class SuperTicTacToe
 {
 private:
     // Integer constants
     static constexpr int SIZE = 3;
     static constexpr int BLOCK_END = 8;
+    static constexpr int QUIT_KEY = 0;
     static constexpr int BLOCK_START = 0;
-    static constexpr int INITIAL_FREQUENCY = 0;
     static constexpr int WIN_NUMBER = 10;
+    static constexpr int INITIAL_FREQUENCY = 0;
 
     // Character constants
     static constexpr char DRAW = 'D';
-    static constexpr char QUIT_KEY = 'Q';
     static constexpr char INITIAL_FILL = ' ';
+    static constexpr unsigned char JUNCTION = 197;
+    static constexpr unsigned char STRAIGHT_LINE = 179;
+    static constexpr unsigned char SLEEPING_LINE = 196;
+    static constexpr unsigned char COLUMN_SEPARATOR = ' ';
 
     typedef std::array<std::array<char, SIZE>, SIZE> singleBoard;
 
@@ -177,7 +176,7 @@ inline bool SuperTicTacToe::validateCurrentCellToPlay()
 
 bool SuperTicTacToe::isBoardSolved(const singleBoard &currentBoard)
 {
-    auto check_row = [&]()
+    static auto check_row = [&]()
     {
         bool is_solved = false;
         int row_count = 0;
@@ -196,10 +195,11 @@ bool SuperTicTacToe::isBoardSolved(const singleBoard &currentBoard)
         return is_solved;
     };
 
-    auto check_column = [&]()
+    static auto check_column = [&]()
     {
         bool is_solved = false;
         int column_count = 0;
+
         for (int col = 0; col < SIZE; col++)
         {
             column_count = 0;
@@ -214,7 +214,7 @@ bool SuperTicTacToe::isBoardSolved(const singleBoard &currentBoard)
         return is_solved;
     };
 
-    auto check_left_diagonal = [&]()
+    static auto check_left_diagonal = [&]()
     {
         int left_diagonal_count = 0;
 
@@ -226,7 +226,7 @@ bool SuperTicTacToe::isBoardSolved(const singleBoard &currentBoard)
         return (left_diagonal_count == SIZE);
     };
 
-    auto check_right_diagonal = [&]()
+    static auto check_right_diagonal = [&]()
     {
         int right_diagonal_count = 0;
 
