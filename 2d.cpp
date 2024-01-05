@@ -44,9 +44,12 @@ private:
     frequencyBoard frequencyCount;
     mainBoard gameBoard;
 
+    void moveInput();
     void initializeBoard(mainBoard &);
     inline void initializeBoard(singleBoard &);
     inline void initializeBoard(frequencyBoard &);
+    inline bool validateCurrentCellToPlay();
+    inline bool validateCurrentBlockToPlay();
 
     bool isBoardSolved(const singleBoard &);
 
@@ -67,6 +70,21 @@ SuperTicTacToe::SuperTicTacToe(const std::string &player1Name, const std::string
     initializeBoard(gameBoard);
     initializeBoard(blockWinner);
     initializeBoard(frequencyCount);
+}
+
+void SuperTicTacToe::moveInput()
+{
+    bool is_cell_valid;
+    bool is_cell_valid;
+}
+
+inline bool SuperTicTacToe::validateCurrentCellToPlay()
+{
+}
+
+inline bool SuperTicTacToe::validateCurrentBlockToPlay()
+{
+    return (blockWinner[currentBlockToPlay] != INITIAL_FILL && currentBlockToPlay != -1 && frequencyCount[currentBlockToPlay] <= SIZE);
 }
 
 inline void SuperTicTacToe::initializeBoard(singleBoard &currentBoard)
