@@ -2,6 +2,9 @@
 #include <array>
 
 #define CLEAR_SCREEN system("CLS");
+#define debug \
+    int a;    \
+    std::cin >> a;
 
 class SuperTicTacToe
 {
@@ -44,21 +47,32 @@ private:
     frequencyBoard frequencyCount;
     mainBoard gameBoard;
 
-    void moveInput();
+    void printTable();
+    void drawLine(const int);
+    void drawLine(const char &, const char &);
+
+    bool moveInput();
+    bool isBoardSolved(const singleBoard &);
+
     void initializeBoard(mainBoard &);
     inline void initializeBoard(singleBoard &);
     inline void initializeBoard(frequencyBoard &);
+
     inline bool validateCurrentCellToPlay();
     inline bool validateCurrentBlockToPlay();
-
-    bool isBoardSolved(const singleBoard &);
 
 public:
     SuperTicTacToe(const std::string &, const std::string &);
 };
 
+int main()
+{
+    SuperTicTacToe one("a", "b");
+}
+
 SuperTicTacToe::SuperTicTacToe(const std::string &player1Name, const std::string &player2Name)
 {
+
     this->isGameDone = false;
     this->currentPlayer = 'X';
     this->currentBlockToPlay = -1;
@@ -70,21 +84,53 @@ SuperTicTacToe::SuperTicTacToe(const std::string &player1Name, const std::string
     initializeBoard(gameBoard);
     initializeBoard(blockWinner);
     initializeBoard(frequencyCount);
+    printTable();
+    int a;
+    std::cin >> a;
 }
 
-void SuperTicTacToe::moveInput()
+bool SuperTicTacToe::moveInput()
 {
-    bool is_cell_valid;
-    bool is_cell_valid;
+    bool is_block_valid = validateCurrentBlockToPlay();
+    bool is_cell_valid = validateCurrentCellToPlay();
+
+    while (!is_block_valid)
+    {
+        std::cout << "Enter block to play - ";
+        std::cin >> currentBlockToPlay;
+
+        if (currentBlockToPlay == 0)
+            return false;
+
+        currentBlockToPlay--;
+
+        is_block_valid = validateCurrentBlockToPlay();
+    }
+
+    while (!is_cell_valid)
+    {
+        std::cout << "Enter cell to play in block " << currentBlockToPlay + 1 << " - ";
+        std::cin >> currentCellToPlay;
+
+        if (currentBlockToPlay == 0)
+            return false;
+
+        currentCellToPlay--;
+
+        is_cell_valid = validateCurrentCellToPlay();
+    }
+
+    return true;
 }
 
 inline bool SuperTicTacToe::validateCurrentCellToPlay()
 {
+    return (currentBlockToPlay >= BLOCK_START && currentBlockToPlay <= BLOCK_END && gameBoard[currentBlockToPlay][currentCellToPlay] == INITIAL_FILL);
 }
 
 inline bool SuperTicTacToe::validateCurrentBlockToPlay()
 {
-    return (blockWinner[currentBlockToPlay] != INITIAL_FILL && currentBlockToPlay != -1 && frequencyCount[currentBlockToPlay] <= SIZE);
+    return (currentBlockToPlay >= BLOCK_START && currentBlockToPlay <= BLOCK_END && blockWinner[currentBlockToPlay] != INITIAL_FILL && currentBlockToPlay != -1 && frequencyCount[currentBlockToPlay] <= SIZE);
 }
 
 inline void SuperTicTacToe::initializeBoard(singleBoard &currentBoard)
@@ -170,4 +216,81 @@ bool SuperTicTacToe::isBoardSolved(const singleBoard &currentBoard)
     };
 
     return check_row() || check_row() || check_left_diagonal() || check_right_diagonal();
+}
+
+void SuperTicTacToe::printTable()
+{
+
+    drawLine(COLUMN_SEPARATOR, COLUMN_SEPARATOR);
+
+    for (int block_row = 0; block_row < SIZE; block_row += 3)
+    {
+        for (int row = 0; row < ROW_SIZE; row++)
+        {
+            std::cout << COLUMN_SEPARATOR;
+            for (int first_block = 0; first_block < ROW_SIZE; first_block++)
+            {
+                std::cout << gameBoard[block_row][row * ROW_SIZE + first_block] << (first_block != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
+            }
+
+            std::cout << COLUMN_SEPARATOR << STRAIGHT_LINE << COLUMN_SEPARATOR;
+
+            for (int second_block = 0; second_block < ROW_SIZE; second_block++)
+            {
+                std::cout << gameBoard[block_row + 1][row * ROW_SIZE + second_block] << (second_block != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
+            }
+
+            std::cout << COLUMN_SEPARATOR << STRAIGHT_LINE << COLUMN_SEPARATOR;
+            for (int third_block = 0; third_block < ROW_SIZE; third_block++)
+            {
+                std::cout << gameBoard[block_row + 2][row * ROW_SIZE + third_block] << (third_block != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
+            }
+
+            std::cout << std::endl;
+
+            if (row != SIZE - 1)
+            {
+                drawLine(1);
+                drawLine(2);
+                drawLine(3);
+                std::cout << std::endl;
+            }
+        }
+
+        drawLine(COLUMN_SEPARATOR, STRAIGHT_LINE);
+
+        if (block_row < SIZE - 1)
+        {
+            drawLine(SLEEPING_LINE, JUNCTION);
+        }
+
+        drawLine(COLUMN_SEPARATOR, STRAIGHT_LINE);
+    }
+}
+
+void SuperTicTacToe::drawLine(const int lineNumber)
+{
+    std::cout << SLEEPING_LINE << SLEEPING_LINE << JUNCTION;
+    std::cout << SLEEPING_LINE << JUNCTION << SLEEPING_LINE;
+    std::cout << COLUMN_SEPARATOR << COLUMN_SEPARATOR;
+    if (lineNumber != 2)
+    {
+        std::cout << STRAIGHT_LINE;
+    }
+}
+
+void SuperTicTacToe::drawLine(const char &lineChar, const char &columnSeparator)
+{
+    for (int sperations = 0; sperations < SIZE; sperations++)
+    {
+        for (int print_char = 0; print_char < SIZE * 2 + 2; print_char++)
+        {
+            std::cout << lineChar;
+        }
+
+        if (sperations != SIZE - 1)
+            std::cout << columnSeparator;
+    }
+
+    std::cout << std::endl;
 }
