@@ -1,10 +1,24 @@
 #include <iostream>
+#include <cstdlib>
 #include <array>
 
-#define CLEAR_SCREEN system("CLS");
 #define debug \
     int a;    \
     std::cin >> a;
+
+#ifdef _WIN32
+#define CLEAR_SCREEN system("cls");
+#define OPEN_INSTRUCTIONS system("start Instructions.pdf")
+
+#elif __APPLE__
+#define CLEAR_SCREEN system("clear");
+#define OPEN_INSTRUCTIONS system("open Instructions.pdf")
+
+#else
+#define CLEAR_SCREEN system("clear");
+#define OPEN_INSTRUCTIONS system("xdg-open Instructions.pdf")
+
+#endif
 
 class SuperTicTacToe
 {
@@ -42,6 +56,7 @@ private:
     char currentPlayer;
 
     std::string player1Name, player2Name;
+    std::string clearScreenCommand;
 
     singleBoard blockWinner;
     frequencyBoard frequencyCount;
@@ -63,6 +78,7 @@ private:
 
 public:
     SuperTicTacToe(const std::string &, const std::string &);
+    bool playGame();
 };
 
 int main()
@@ -80,13 +96,17 @@ SuperTicTacToe::SuperTicTacToe(const std::string &player1Name, const std::string
     this->blocksCompletelyfilled = 0;
     this->player1Name = player1Name;
     this->player2Name = player2Name;
+    this->clearScreenCommand = clearScreenCommand;
 
     initializeBoard(gameBoard);
     initializeBoard(blockWinner);
     initializeBoard(frequencyCount);
     printTable();
-    int a;
-    std::cin >> a;
+}
+
+bool SuperTicTacToe::playGame()
+{
+    return true;
 }
 
 bool SuperTicTacToe::moveInput()
@@ -223,43 +243,43 @@ void SuperTicTacToe::printTable()
 
     drawLine(COLUMN_SEPARATOR, COLUMN_SEPARATOR);
 
-    for (int block_row = 0; block_row < SIZE; block_row += 3)
+    for (int block_row = 0; block_row < ROW_SIZE; block_row++)
     {
         for (int row = 0; row < ROW_SIZE; row++)
         {
             std::cout << COLUMN_SEPARATOR;
-            for (int first_block = 0; first_block < ROW_SIZE; first_block++)
+
+            for (int first_col = 0; first_col < ROW_SIZE; first_col++)
             {
-                std::cout << gameBoard[block_row][row * ROW_SIZE + first_block] << (first_block != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
+                std::cout << gameBoard[block_row][ROW_SIZE * row + first_col] << (first_col != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
             }
 
             std::cout << COLUMN_SEPARATOR << STRAIGHT_LINE << COLUMN_SEPARATOR;
 
-            for (int second_block = 0; second_block < ROW_SIZE; second_block++)
+            for (int second_col = 0; second_col < ROW_SIZE; second_col++)
             {
-                std::cout << gameBoard[block_row + 1][row * ROW_SIZE + second_block] << (second_block != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
+                std::cout << gameBoard[block_row + 1][ROW_SIZE * row + second_col] << (second_col != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
             }
 
             std::cout << COLUMN_SEPARATOR << STRAIGHT_LINE << COLUMN_SEPARATOR;
-            for (int third_block = 0; third_block < ROW_SIZE; third_block++)
+
+            for (int third_col = 0; third_col < ROW_SIZE; third_col++)
             {
-                std::cout << gameBoard[block_row + 2][row * ROW_SIZE + third_block] << (third_block != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
+                std::cout << gameBoard[block_row + 2][ROW_SIZE * row + third_col] << (third_col != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
             }
 
             std::cout << std::endl;
-
-            if (row != SIZE - 1)
+            if (row != ROW_SIZE - 1)
             {
                 drawLine(1);
                 drawLine(2);
                 drawLine(3);
-                std::cout << std::endl;
             }
         }
 
         drawLine(COLUMN_SEPARATOR, STRAIGHT_LINE);
 
-        if (block_row < SIZE - 1)
+        if (block_row < ROW_SIZE - 1)
         {
             drawLine(SLEEPING_LINE, JUNCTION);
         }
@@ -273,22 +293,26 @@ void SuperTicTacToe::drawLine(const int lineNumber)
     std::cout << SLEEPING_LINE << SLEEPING_LINE << JUNCTION;
     std::cout << SLEEPING_LINE << JUNCTION << SLEEPING_LINE;
     std::cout << COLUMN_SEPARATOR << COLUMN_SEPARATOR;
-    if (lineNumber != 2)
+    if (lineNumber != 3)
     {
         std::cout << STRAIGHT_LINE;
+    }
+    else
+    {
+        std::cout << std::endl;
     }
 }
 
 void SuperTicTacToe::drawLine(const char &lineChar, const char &columnSeparator)
 {
-    for (int sperations = 0; sperations < SIZE; sperations++)
+    for (int sperations = 0; sperations < ROW_SIZE; sperations++)
     {
-        for (int print_char = 0; print_char < SIZE * 2 + 2; print_char++)
+        for (int print_char = 0; print_char < ROW_SIZE * 2 + 2; print_char++)
         {
             std::cout << lineChar;
         }
 
-        if (sperations != SIZE - 1)
+        if (sperations != ROW_SIZE - 1)
             std::cout << columnSeparator;
     }
 
