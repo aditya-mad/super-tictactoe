@@ -6,6 +6,7 @@
     int a;    \
     std::cin >> a;
 
+// Macros for machine specific instructions
 #ifdef _WIN32
 #define CLEAR_SCREEN system("cls");
 #define OPEN_INSTRUCTIONS system("start Instructions.pdf")
@@ -51,17 +52,17 @@ private:
 
     int currentCellToPlay;
     int currentBlockToPlay;
-    int blocksCompletelyfilled;
+    int restrictedBlocks;
 
     char currentPlayer;
 
     std::string player1Name, player2Name;
-    std::string clearScreenCommand;
 
+    mainBoard gameBoard;
     singleBoard blockWinner;
     frequencyBoard frequencyCount;
-    mainBoard gameBoard;
 
+    // helper methods
     void printTable();
     void drawLine(const int);
     void drawLine(const char &, const char &);
@@ -73,12 +74,12 @@ private:
     inline void initializeBoard(singleBoard &);
     inline void initializeBoard(frequencyBoard &);
 
-    inline bool validateCurrentCellToPlay();
-    inline bool validateCurrentBlockToPlay();
+    inline bool isCellValid();
+    inline bool isBlockValid();
 
 public:
     SuperTicTacToe(const std::string &, const std::string &);
-    bool playGame();
+    char playGame();
 };
 
 int main()
@@ -93,10 +94,9 @@ SuperTicTacToe::SuperTicTacToe(const std::string &player1Name, const std::string
     this->currentPlayer = 'X';
     this->currentBlockToPlay = -1;
     this->currentCellToPlay = -1;
-    this->blocksCompletelyfilled = 0;
+    this->restrictedBlocks = 0;
     this->player1Name = player1Name;
     this->player2Name = player2Name;
-    this->clearScreenCommand = clearScreenCommand;
 
     initializeBoard(gameBoard);
     initializeBoard(blockWinner);
@@ -104,17 +104,54 @@ SuperTicTacToe::SuperTicTacToe(const std::string &player1Name, const std::string
     printTable();
 }
 
-bool SuperTicTacToe::playGame()
+char SuperTicTacToe::playGame()
 {
-    return true;
+    while (!isGameDone)
+    {
+        if (!moveInput())
+            return DRAW;
+
+        gameBoard[currentBlockToPlay][currentCellToPlay] = currentPlayer;
+        frequencyCount[currentBlockToPlay]++;
+
+        if (isBoardSolved(gameBoard[currentBlockToPlay]))
+        {
+            blockWinner[currentBlockToPlay] = currentPlayer;
+            frequencyCount[currentBlockToPlay] = WIN_NUMBER;
+
+            if (isBoardSolved(blockWinner))
+            {
+                isGameDone = true;
+                continue;
+            }
+        }
+        else if (frequencyCount[currentBlockToPlay] == SIZE)
+        {
+            blockWinner[currentBlockToPlay] = DRAW;
+            frequencyCount[currentBlockToPlay] = WIN_NUMBER;
+        }
+
+        restrictedBlocks = frequencyCount[currentBlockToPlay] > SIZE ? restrictedBlocks + 1 : restrictedBlocks;
+
+        if (restrictedBlocks == SIZE)
+        {
+            isGameDone = true;
+            currentPlayer = DRAW;
+            continue;
+        }
+
+        currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
+        currentBlockToPlay = currentCellToPlay;
+        currentCellToPlay = -1;
+    }
+
+    return currentPlayer;
 }
 
 bool SuperTicTacToe::moveInput()
 {
-    bool is_block_valid = validateCurrentBlockToPlay();
-    bool is_cell_valid = validateCurrentCellToPlay();
 
-    while (!is_block_valid)
+    while (!isBlockValid())
     {
         std::cout << "Enter block to play - ";
         std::cin >> currentBlockToPlay;
@@ -123,11 +160,9 @@ bool SuperTicTacToe::moveInput()
             return false;
 
         currentBlockToPlay--;
-
-        is_block_valid = validateCurrentBlockToPlay();
     }
 
-    while (!is_cell_valid)
+    while (!isCellValid())
     {
         std::cout << "Enter cell to play in block " << currentBlockToPlay + 1 << " - ";
         std::cin >> currentCellToPlay;
@@ -136,19 +171,17 @@ bool SuperTicTacToe::moveInput()
             return false;
 
         currentCellToPlay--;
-
-        is_cell_valid = validateCurrentCellToPlay();
     }
 
     return true;
 }
 
-inline bool SuperTicTacToe::validateCurrentCellToPlay()
+inline bool SuperTicTacToe::isCellValid()
 {
     return (currentBlockToPlay >= BLOCK_START && currentBlockToPlay <= BLOCK_END && gameBoard[currentBlockToPlay][currentCellToPlay] == INITIAL_FILL);
 }
 
-inline bool SuperTicTacToe::validateCurrentBlockToPlay()
+inline bool SuperTicTacToe::isBlockValid()
 {
     return (currentBlockToPlay >= BLOCK_START && currentBlockToPlay <= BLOCK_END && blockWinner[currentBlockToPlay] != INITIAL_FILL && currentBlockToPlay != -1 && frequencyCount[currentBlockToPlay] <= SIZE);
 }
