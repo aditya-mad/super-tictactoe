@@ -1,10 +1,9 @@
 #include <iostream>
+#include <algorithm>
 #include <cstdlib>
 #include <array>
 
-#define debug \
-    int a;    \
-    std::cin >> a;
+int a;
 
 // Macros for machine specific instructions
 #ifdef _WIN32
@@ -101,7 +100,9 @@ SuperTicTacToe::SuperTicTacToe(const std::string &player1Name, const std::string
     initializeBoard(gameBoard);
     initializeBoard(blockWinner);
     initializeBoard(frequencyCount);
-    printTable();
+    std::string ans = (playGame() == DRAW ? "stopped" : std::to_string(currentPlayer));
+    std::cout << "Main game - " << ans;
+    std::cin >> a;
 }
 
 char SuperTicTacToe::playGame()
@@ -113,6 +114,9 @@ char SuperTicTacToe::playGame()
 
         gameBoard[currentBlockToPlay][currentCellToPlay] = currentPlayer;
         frequencyCount[currentBlockToPlay]++;
+
+        CLEAR_SCREEN;
+        printTable();
 
         if (isBoardSolved(gameBoard[currentBlockToPlay]))
         {
@@ -129,6 +133,7 @@ char SuperTicTacToe::playGame()
         {
             blockWinner[currentBlockToPlay] = DRAW;
             frequencyCount[currentBlockToPlay] = WIN_NUMBER;
+            std::cout << "Tie\n";
         }
 
         restrictedBlocks = frequencyCount[currentBlockToPlay] > SIZE ? restrictedBlocks + 1 : restrictedBlocks;
@@ -150,7 +155,6 @@ char SuperTicTacToe::playGame()
 
 bool SuperTicTacToe::moveInput()
 {
-
     while (!isBlockValid())
     {
         std::cout << "Enter block to play - ";
@@ -167,7 +171,7 @@ bool SuperTicTacToe::moveInput()
         std::cout << "Enter cell to play in block " << currentBlockToPlay + 1 << " - ";
         std::cin >> currentCellToPlay;
 
-        if (currentBlockToPlay == 0)
+        if (currentCellToPlay == 0)
             return false;
 
         currentCellToPlay--;
@@ -178,12 +182,12 @@ bool SuperTicTacToe::moveInput()
 
 inline bool SuperTicTacToe::isCellValid()
 {
-    return (currentBlockToPlay >= BLOCK_START && currentBlockToPlay <= BLOCK_END && gameBoard[currentBlockToPlay][currentCellToPlay] == INITIAL_FILL);
+    return (currentCellToPlay >= BLOCK_START && currentCellToPlay < BLOCK_END && gameBoard[currentBlockToPlay][currentCellToPlay] == INITIAL_FILL);
 }
 
 inline bool SuperTicTacToe::isBlockValid()
 {
-    return (currentBlockToPlay >= BLOCK_START && currentBlockToPlay <= BLOCK_END && blockWinner[currentBlockToPlay] != INITIAL_FILL && currentBlockToPlay != -1 && frequencyCount[currentBlockToPlay] <= SIZE);
+    return (currentBlockToPlay >= BLOCK_START && currentBlockToPlay < BLOCK_END && blockWinner[currentBlockToPlay] == INITIAL_FILL && frequencyCount[currentBlockToPlay] < SIZE);
 }
 
 inline void SuperTicTacToe::initializeBoard(singleBoard &currentBoard)
@@ -208,18 +212,15 @@ bool SuperTicTacToe::isBoardSolved(const singleBoard &currentBoard)
 {
     auto check_row = [&]()
     {
-        bool is_solved = false;
-        int row_count = 0;
+        bool is_solved = true;
 
         for (int row = 0; row < ROW_SIZE; row++)
         {
-            row_count = 0;
-            for (int col = 0; col < COLUMN_SIZE; col++)
+            is_solved = true;
+            for (int col = 0; col < COLUMN_SIZE && is_solved; col++)
             {
-                row_count = row_count * (currentPlayer == currentBoard[row * ROW_SIZE + col % SIZE]) + 1;
+                is_solved &= (currentPlayer == currentBoard[row * ROW_SIZE + col % SIZE]);
             }
-
-            is_solved |= (row_count == ROW_SIZE);
         }
 
         return is_solved;
@@ -227,18 +228,15 @@ bool SuperTicTacToe::isBoardSolved(const singleBoard &currentBoard)
 
     auto check_column = [&]()
     {
-        bool is_solved = false;
-        int column_count = 0;
+        bool is_solved = true;
 
         for (int col = 0; col < COLUMN_SIZE; col++)
         {
-            column_count = 0;
-            for (int row = 0; row < ROW_SIZE; row++)
+            is_solved = true;
+            for (int row = 0; row < ROW_SIZE && is_solved; row++)
             {
-                column_count = column_count * (currentPlayer == currentBoard[row * ROW_SIZE + col % SIZE]) + 1;
+                is_solved &= (currentPlayer == currentBoard[row * ROW_SIZE + col % SIZE]);
             }
-
-            is_solved |= (column_count == COLUMN_SIZE);
         }
 
         return is_solved;
@@ -248,7 +246,7 @@ bool SuperTicTacToe::isBoardSolved(const singleBoard &currentBoard)
     {
         bool is_solved = true;
 
-        for (int row = 0; row < ROW_SIZE; row++)
+        for (int row = 0; row < ROW_SIZE && is_solved; row++)
         {
             is_solved &= (currentPlayer == currentBoard[row * ROW_SIZE + row]);
         }
@@ -260,7 +258,7 @@ bool SuperTicTacToe::isBoardSolved(const singleBoard &currentBoard)
     {
         bool is_solved = true;
 
-        for (int row = 0; row < ROW_SIZE; row++)
+        for (int row = 0; row < ROW_SIZE && is_solved; row++)
         {
             is_solved &= (currentPlayer == currentBoard[row * ROW_SIZE + ROW_SIZE - row - 1]);
         }
@@ -284,21 +282,21 @@ void SuperTicTacToe::printTable()
 
             for (int first_col = 0; first_col < ROW_SIZE; first_col++)
             {
-                std::cout << gameBoard[block_row][ROW_SIZE * row + first_col] << (first_col != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
+                std::cout << gameBoard[block_row * ROW_SIZE][ROW_SIZE * row + first_col] << (first_col != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
             }
 
             std::cout << COLUMN_SEPARATOR << STRAIGHT_LINE << COLUMN_SEPARATOR;
 
             for (int second_col = 0; second_col < ROW_SIZE; second_col++)
             {
-                std::cout << gameBoard[block_row + 1][ROW_SIZE * row + second_col] << (second_col != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
+                std::cout << gameBoard[block_row * ROW_SIZE + 1][ROW_SIZE * row + second_col] << (second_col != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
             }
 
             std::cout << COLUMN_SEPARATOR << STRAIGHT_LINE << COLUMN_SEPARATOR;
 
             for (int third_col = 0; third_col < ROW_SIZE; third_col++)
             {
-                std::cout << gameBoard[block_row + 2][ROW_SIZE * row + third_col] << (third_col != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
+                std::cout << gameBoard[block_row * ROW_SIZE + 2][ROW_SIZE * row + third_col] << (third_col != ROW_SIZE - 1 ? STRAIGHT_LINE : COLUMN_SEPARATOR);
             }
 
             std::cout << std::endl;
